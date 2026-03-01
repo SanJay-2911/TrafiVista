@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { format, parse, isValid } from "date-fns";
 import { Input } from "@/components/ui/input";
+import api from "@/lib/api";
 
 const UserUpload = () => {
   const navigate = useNavigate();
@@ -96,7 +97,7 @@ const UserUpload = () => {
     }
   };
 
-  const handlePredict = () => {
+  const handlePredict = async () => {
     if (!file || !isValidTrafficData || !selectedSpot || !date) {
       toast.error("Please complete all selections and upload valid traffic data.");
       return;
@@ -112,18 +113,34 @@ const UserUpload = () => {
       return;
     }
     setUploading(true);
-    setTimeout(() => {
-      setUploading(false);
-      setUploaded(true);
-      toast.success(`Congestion forecasted for ${selectedSpot} on ${format(date, "PPP")} at ${time}!`);
+
+    try {
+      const response = await api.post("/traffic/predict", {
+        state: indiaLocations.find(s => s.id === selectedState)?.name || "",
+        district: currentState?.districts.find(d => d.id === selectedDistrict)?.name || "",
+        city: currentDistrict?.cities.find(c => c.id === selectedCity)?.name || "",
+        spot: selectedSpot,
+        timestamp: selectedDateTime.toISOString(),
+      });
+
+      const { congestion_level, confidence } = response.data;
+
+      toast.success(`Congestion forecasted for ${selectedSpot}!`);
+
       navigate("/dashboard/result", {
         state: {
           spot: selectedSpot,
           date: format(date, "PPP"),
-          time: time
+          time: time,
+          congestion: congestion_level,
+          confidence: (confidence * 100).toFixed(0) + "%"
         }
       });
-    }, 2500);
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || "Prediction failed. Please try again.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   // Derived location data

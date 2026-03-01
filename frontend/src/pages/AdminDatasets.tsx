@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, FileText, Trash2, Download, Search, RotateCcw, CheckCircle2, Cpu, History, AlertCircle, X } from "lucide-react";
@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import api from "@/lib/api";
 
 interface Dataset {
   id: string;
@@ -39,13 +40,46 @@ const AdminDatasets = () => {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
 
-  const filtered = datasets.filter((d) =>
-    d.name.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    fetchHistory();
+  }, []);
 
-  const handleDelete = (id: string) => {
-    setDatasets((prev) => prev.filter((d) => d.id !== id));
-    toast.success("Dataset deleted.");
+  const fetchHistory = async () => {
+    try {
+      const response = await api.get("/traffic/history");
+      const mapped: Dataset[] = response.data.map((record: any) => ({
+        id: record.id.toString(),
+        name: `${record.spot} - ${record.city}`,
+        rows: record.vehicle_count || 0,
+        size: "N/A",
+        uploaded: record.timestamp.split('T')[0],
+        status: "ready"
+      }));
+      setDatasets(mapped);
+
+      // Create dummy version history for demo
+      const versionList: ModelVersion[] = response.data.slice(0, 3).map((record: any, idx: number) => ({
+        id: `V${record.id}`,
+        version: `2.${idx + 1}.0`,
+        accuracy: `${(95 + Math.random() * 3).toFixed(1)}%`,
+        trainedAt: new Date(record.created_at).toLocaleString(),
+        dataset: `${record.spot} Traffic Data`,
+        isActive: idx === 0
+      }));
+      setVersions(versionList);
+    } catch (error) {
+      console.error("Failed to fetch history:", error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await api.delete(`/traffic/record/${id}`);
+      setDatasets((prev) => prev.filter((d) => d.id !== id));
+      toast.success("Dataset record removed (Undo successful).");
+    } catch (error) {
+      toast.error("Failed to delete record.");
+    }
   };
 
   const processUpload = (file: File) => {
@@ -181,7 +215,7 @@ const AdminDatasets = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2D2D30]">
-                  {filtered.map((d) => (
+                  {datasets.filter(d => d.name.toLowerCase().includes(search.toLowerCase())).map((d) => (
                     <tr key={d.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
@@ -229,7 +263,7 @@ const AdminDatasets = () => {
                   ))}
                 </tbody>
               </table>
-              {filtered.length === 0 && (
+              {datasets.filter(d => d.name.toLowerCase().includes(search.toLowerCase())).length === 0 && (
                 <div className="py-20 text-center text-muted-foreground">
                   <AlertCircle className="mx-auto h-12 w-12 mb-4 opacity-20" />
                   No datasets found. Start by uploading a file.

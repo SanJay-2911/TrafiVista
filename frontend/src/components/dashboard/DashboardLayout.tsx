@@ -12,7 +12,7 @@ interface DashboardLayoutProps {
 const userLinks = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Overview" },
   { to: "/dashboard/upload", icon: Upload, label: "Upload Data" },
-  { to: "/dashboard/predictions", icon: BarChart3, label: "Predictions" },
+  { to: "/dashboard/predictions", icon: BarChart3, label: "Prediction History" },
 ];
 
 const adminLinks = [

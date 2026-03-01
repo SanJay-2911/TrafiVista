@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { motion } from "framer-motion";
-import { ArrowLeft, MapPin, Calendar, Clock, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Clock, AlertTriangle, CheckCircle2, Info, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,8 @@ const PredictionResult = () => {
         spot: string;
         date: string;
         time: string;
+        congestion: "High" | "Medium" | "Low";
+        confidence: string;
     } | null;
 
     if (!params) {
@@ -29,9 +31,7 @@ const PredictionResult = () => {
         );
     }
 
-    // Randomly select a result (High, Medium, Low) for demo purposes
-    const results: ("High" | "Medium" | "Low")[] = ["High", "Medium", "Low"];
-    const result = results[Math.floor(Math.random() * results.length)];
+    const result = params.congestion;
 
     const statusColors = {
         High: "text-red-400 border-red-500/20 bg-red-500/10",
@@ -129,6 +129,16 @@ const PredictionResult = () => {
                                 <div>
                                     <p className="text-xs font-bold text-muted-foreground uppercase">Target Time</p>
                                     <p className="text-lg font-bold text-white mt-1">{params.time}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-4 pt-4 border-t border-[#2D2D30]">
+                                <div className="p-3 rounded-2xl bg-[#1A1A1D] border border-[#2D2D30]">
+                                    <Activity className="h-5 w-5 text-[#9b87f5]" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-muted-foreground uppercase">Model Confidence</p>
+                                    <p className="text-lg font-bold text-white mt-1">{params.confidence}</p>
                                 </div>
                             </div>
                         </div>

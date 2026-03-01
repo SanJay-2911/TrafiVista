@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import api from "@/lib/api";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -17,16 +18,46 @@ const Auth = () => {
   );
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simulated auth — replace with real auth when Cloud is enabled
-    setTimeout(() => {
+    const email = (e.currentTarget.elements.namedItem("email") as HTMLInputElement).value;
+    const password = (e.currentTarget.elements.namedItem("password") as HTMLInputElement).value;
+    const fullName = isRegister
+      ? (e.currentTarget.elements.namedItem("name") as HTMLInputElement).value
+      : undefined;
+
+    try {
+      if (isRegister) {
+        await api.post("/auth/register", {
+          email,
+          password,
+          full_name: fullName,
+        });
+        toast.success("Account created! Please sign in.");
+        setIsRegister(false);
+      } else {
+        const formData = new FormData();
+        formData.append("username", email);
+        formData.append("password", password);
+
+        const response = await api.post("/auth/login", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        const { access_token, role: userRole } = response.data;
+        localStorage.setItem("access_token", access_token);
+        localStorage.setItem("user_role", userRole);
+
+        toast.success("Signed in!");
+        navigate(userRole === "admin" ? "/admin" : "/dashboard");
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || "Authentication failed");
+    } finally {
       setLoading(false);
-      toast.success(isRegister ? "Account created!" : "Signed in!");
-      navigate(role === "admin" ? "/admin" : "/dashboard");
-    }, 1000);
+    }
   };
 
   return (
@@ -63,8 +94,8 @@ const Auth = () => {
                   if (r === "admin") setIsRegister(false);
                 }}
                 className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${role === r
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
                   }`}
               >
                 {r === "user" ? "User" : "Admin"}

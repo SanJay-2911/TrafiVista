@@ -1,7 +1,5 @@
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 const AdminSettings = () => {
   return (
@@ -24,9 +22,6 @@ const AdminSettings = () => {
                 <p className="mt-1 font-display text-lg font-bold text-foreground italic opacity-50 text-sm">Never trained</p>
               </div>
             </div>
-            <Button className="mt-4" onClick={() => toast.info("Retraining requires TrafiVista Cloud.")}>
-              Retrain Model
-            </Button>
           </div>
 
           <div className="surface-card p-6">
