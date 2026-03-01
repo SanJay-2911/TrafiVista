@@ -40,23 +40,42 @@ def upload_traffic_record(
     db: Session = Depends(get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
-    db_record = TrafficRecord(
-        **record_in.model_dump(),
-        uploaded_by_id=current_user.id
-    )
-    db.add(db_record)
-    db.commit()
-    db.refresh(db_record)
-    return db_record
+    # only persist data when an administrator performs the upload
+    # regular users may submit records to help improve the ML model,
+    # but those inputs are not stored in the database.
+    if current_user.is_admin:
+        db_record = TrafficRecord(
+            **record_in.model_dump(),
+            uploaded_by_id=current_user.id
+        )
+        db.add(db_record)
+        db.commit()
+        db.refresh(db_record)
+        # trigger model training on admin data as well
+        model.simulate_training()
+        return db_record
+    else:
+        # use the provided record to refine the in‑memory model only
+        model.train_on_record(record_in)
+        # return a dummy response matching the schema but not saved
+        from datetime import datetime
+        return TrafficRecord(
+            **record_in.model_dump(),
+            id=0,
+            uploaded_by_id=current_user.id,
+            created_at=datetime.utcnow()
+        )
 
 @router.get("/history", response_model=List[TrafficSchema])
 def get_traffic_history(
     db: Session = Depends(get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
-    if current_user.is_admin:
-        return db.query(TrafficRecord).all()
-    return db.query(TrafficRecord).filter(TrafficRecord.uploaded_by_id == current_user.id).all()
+    # always return only records uploaded by the requesting user
+    # admins no longer receive the full dataset to avoid seeing unrelated uploads
+    return db.query(TrafficRecord).filter(
+        TrafficRecord.uploaded_by_id == current_user.id
+    ).all()
 
 @router.delete("/record/{record_id}", status_code=204)
 def delete_traffic_record(

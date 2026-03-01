@@ -273,10 +273,10 @@
 │       │   └─→ Render user-specific info                       │
 │       │                                                         │
 │       ├─→ UserUpload.tsx                                       │
-│       │   └─→ POST to /api/traffic/upload                    │
+│       │   ├─→ POST to /api/traffic/upload (saves if admin)  │
 │       │                                                         │
 │       ├─→ UserPredictions.tsx                                  │
-│       │   ├─→ GET from /api/traffic/history                   │
+│       │   ├─→ GET from /api/traffic/history (only admin|owner records)
 │       │   └─→ POST to /api/traffic/predict                    │
 │       │                                                         │
 │       ├─→ AdminDashboard.tsx                                   │

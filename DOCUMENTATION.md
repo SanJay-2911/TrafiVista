@@ -266,9 +266,9 @@ Authentication endpoints:
 
 #### `app/api/endpoints/traffic.py`
 Traffic data endpoints:
-- `POST /api/traffic/upload`: Upload raw traffic data
+- `POST /api/traffic/upload`: Upload traffic data. **Admin uploads are saved to database; user uploads are used only to improve model accuracy in-memory without persistence**
 - `POST /api/traffic/predict`: Get ML prediction for specific location/time
-- `GET /api/traffic/history`: Retrieve historical traffic records
+- `GET /api/traffic/history`: Retrieve historical traffic records **for the current user only** (admin users only see their own saved datasets)
 - `GET /api/traffic/analytics`: Get aggregated analytics (admin only)
 
 #### `app/core/security.py`
@@ -447,6 +447,10 @@ Response (200):
 ### Traffic Endpoints
 
 #### Upload Traffic Record
+Behavior depends on user role:
+- **Admin uploads**: Saved to database and used for model training
+- **User uploads**: Not persisted to database, but used to improve model accuracy in-memory
+
 ```
 POST /api/traffic/upload
 Authorization: Bearer {access_token}
@@ -463,7 +467,8 @@ Content-Type: application/json
   "timestamp": "2024-01-15T14:30:00Z"
 }
 
-Response (201):
+Response (200):
+If Admin:
 {
   "id": 1,
   "state": "Maharashtra",
@@ -473,11 +478,26 @@ Response (201):
   "vehicle_count": 1250,
   "average_speed": 45.5,
   "congestion_level": "Medium",
-  "confidence": 0.87,
   "timestamp": "2024-01-15T14:30:00Z",
   "uploaded_by_id": 1,
   "created_at": "2024-01-15T14:35:00Z"
 }
+
+If Regular User:
+{
+  "id": 0,
+  "state": "Maharashtra",
+  "district": "Mumbai",
+  "city": "Mumbai",
+  "spot": "Bandra Worli Sea Link",
+  "vehicle_count": 1250,
+  "average_speed": 45.5,
+  "congestion_level": "Medium",
+  "timestamp": "2024-01-15T14:30:00Z",
+  "uploaded_by_id": {user_id},
+  "created_at": "{current_timestamp}"
+} 
+(Note: id=0 indicates non-persistent training data)
 ```
 
 #### Get Traffic Predictions

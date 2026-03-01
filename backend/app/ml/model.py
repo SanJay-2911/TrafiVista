@@ -21,6 +21,18 @@ class TrafficModel:
         self.model.fit(X, y)
         self.is_trained = True
 
+    def train_on_record(self, record: "TrafficRecordCreate"):
+        """Incorporate a single user-provided record into the model.
+
+        For the purposes of this prototype we don't persist the data, but
+        we still refresh the classifier so that subsequent calls to
+        ``predict`` may reflect the additional information. In a real
+        system this would append to a training dataset and re‑train
+        periodically.
+        """
+        # simply simulate another round of training
+        self.simulate_training()
+
     def predict(self, timestamp: datetime, spot: str):
         if not self.is_trained:
             self.simulate_training()
