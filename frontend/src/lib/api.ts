@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "/api",
+    baseURL: "http://127.0.0.1:8000/api",
     headers: {
         "Content-Type": "application/json",
     },
@@ -9,7 +9,7 @@ const api = axios.create({
 
 // Interceptor to add auth token
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("token");
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }

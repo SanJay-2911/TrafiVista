@@ -28,16 +28,35 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     db.refresh(db_user)
     return db_user
 
+from pydantic import BaseModel
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
 @router.post("/login", response_model=Token)
-def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
-    user = db.query(User).filter(User.email == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.hashed_password):
+def login(login_data: LoginRequest, db: Session = Depends(get_db)):
+    email = login_data.email
+    password = login_data.password
+
+    user = db.query(User).filter(User.email == email).first()
+
+    if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Invalid credentials"
+        )
+        
+    print("Login request received:", email)
+    
+    if not verify_password(password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials"
         )
     
-    role = "admin" if user.is_admin else "user"
-    access_token = create_access_token(subject=user.id, role=role)
-    return {"access_token": access_token, "token_type": "bearer", "role": role}
+    token = create_access_token(data={"sub": user.email})
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }

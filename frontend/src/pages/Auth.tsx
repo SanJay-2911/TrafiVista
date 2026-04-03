@@ -38,23 +38,18 @@ const Auth = () => {
         toast.success("Account created! Please sign in.");
         setIsRegister(false);
       } else {
-        const formData = new FormData();
-        formData.append("username", email);
-        formData.append("password", password);
+        console.log("Sending:", email, password);
+        const response = await api.post("/auth/login", { email, password });
+        console.log("API response:", response.data);
 
-        const response = await api.post("/auth/login", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-
-        const { access_token, role: userRole } = response.data;
-        localStorage.setItem("access_token", access_token);
-        localStorage.setItem("user_role", userRole);
+        const { access_token } = response.data;
+        localStorage.setItem("token", access_token);
 
         toast.success("Signed in!");
-        navigate(userRole === "admin" ? "/admin" : "/dashboard");
+        navigate(role === "admin" ? "/admin" : "/dashboard");
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || "Authentication failed");
+      toast.error(error.response?.data?.detail || "Login failed");
     } finally {
       setLoading(false);
     }

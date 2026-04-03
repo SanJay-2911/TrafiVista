@@ -21,8 +21,6 @@ class User(UserBase):
 class Token(BaseModel):
     access_token: str
     token_type: str
-    role: str  # "admin" or "user"
 
 class TokenPayload(BaseModel):
-    sub: Optional[int] = None
-    role: Optional[str] = None
+    sub: Optional[str] = None

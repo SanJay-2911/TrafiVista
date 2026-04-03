@@ -10,14 +10,14 @@ def init_db():
     db = SessionLocal()
     try:
         # Check if admin already exists
-        admin_email = "trafivista@gmail.com"
+        admin_email = "admin@gmail.com"
         admin_user = db.query(User).filter(User.email == admin_email).first()
         
         if not admin_user:
             print(f"Seeding admin user: {admin_email}")
             new_admin = User(
                 email=admin_email,
-                hashed_password=get_password_hash("grizzly"),
+                hashed_password=get_password_hash("admin123"),
                 full_name="System Admin",
                 is_active=True,
                 is_admin=True
