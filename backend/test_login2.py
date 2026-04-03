@@ -5,7 +5,7 @@ import traceback
 client = TestClient(app)
 
 try:
-    response = client.post("/api/auth/login", json={"email": "admin@gmail.com", "password": "admin123"})
+    response = client.post("/api/auth/login", json={"email": "trafivista@gmail.com", "password": "grizzly"})
     print("STATUS", response.status_code)
     print("BODY", response.json())
 except Exception as e:
